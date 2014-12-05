@@ -1,30 +1,57 @@
 var gulp = require('gulp');
-var jshint = require('gulp-jshint')
-var concat = require('gulp-concat')
-var uglify = require('gulp-uglify')
+var concat = require('gulp-concat');
+var uglify = require('gulp-uglify');
+var rename = require('gulp-rename');
+var stylus = require('gulp-stylus');
+var clean = require('gulp-clean');
 
-// Lint JS
-gulp.task('lint', function() {
-  return gulp.src('src/*.js')
-    .pipe(jshint())
-    .pipe(jshint.reporter('default'));
+gulp.task('copy-bower-components', function(){
+	return gulp.src('bower_components/**/dist/*.min.js')
+	.pipe(rename(function(path){path.dirname = '';}))
+	.pipe(gulp.dest('build/public'))
 });
 
+gulp.task('copy-node-components', function(){
+	return gulp.src(['models', 'view', 'controllers', 'routes', 'app.js'])
+	.pipe(gulp.dest('build'));
+});
 
-// Concat & Minify JS
-gulp.task('minify', function(){
-  return gulp.src('src/*.js')
-    .pipe(concat('all.js'))
-    .pipe(gulp.dest('dist'))
-    .pipe(rename('all.min.js'))
-    .pipe(uglify())
-    .pipe(gulp.dest('dist'));
+gulp.task('copy-static-components', function(){
+	return gulp.src('static/**')
+	.pipe(gulp.dest('build/public'));
+});
+
+gulp.task('copy-javascript-components', function(){
+	return gulp.src('javascript/**/*.js')
+	.pipe(gulp.dest('build/public'))
+});
+
+gulp.task('copy-stylesheet-components', function(){
+	return gulp.src('stylesheets/**/*.stylus')
+	.pipe(stylus())
+	.pipe(gulp.dest('build/public'))
 });
 
 // Watch Our Files
 gulp.task('watch', function() {
-  gulp.watch('src/*.js', ['lint', 'minify']);
+  gulp.watch('javascript/**/*.js', ['copy-javascript-components']);
+  gulp.watch('stylesheets/**/*.stylus', ['copy-stylesheet-components']);
+  gulp.watch(
+  	['models/**/*', 'views/**/*', 'controllers/**/*', 'routes/**/*', 'app.js'], ['copy-node-components'])
+});
+
+gulp.task('clean', function(){
+	return gulp.src('build/**')
+	.pipe(clean());
 });
 
 // Default
-gulp.task('default', ['lint', 'minify', 'watch']);
+gulp.task('default', [
+	'copy-bower-components', 
+	'copy-node-components',
+	'copy-static-components',
+	'copy-javascript-components',
+	'copy-stylesheet-components',
+	]);
+
+
